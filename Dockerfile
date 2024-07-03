@@ -85,7 +85,7 @@ ARG SIM_TEST_REPO=https://www.github.com/sesame-project/simulationBasedTesting.g
 ARG SIM_TEST_BRANCH=distributed-expt
 
 # Sim-testing platform args
-RUN mkdir -p ${SIM_TEST_ROOT} && cd ${SIM_TEST_ROOT} && git clone ${SIM_TEST_REPO} -b ${SIM_TEST_BRANCH}
+RUN mkdir -p ${SIM_TEST_ROOT}  && cd ${SIM_TEST_ROOT} && git clone ${SIM_TEST_REPO} -b ${SIM_TEST_BRANCH}
 
 # Plugin for project import
 COPY extra-files/*.jar ${INSTALL_DIR}/plugins
@@ -111,7 +111,24 @@ RUN ${INSTALL_DIR}/eclipse -nosplash -application com.seeq.eclipse.importproject
     -import ${SBT_REPO_ROOT}/uk.ac.york.sesame.testing.architecture.ros/ \
     -import ${SBT_REPO_ROOT}/uk.ac.york.sesame.testing.dsl/ \
     -import ${SBT_REPO_ROOT}/jgea/ \
-    -import ${SBT_REPO_ROOT}/uk.ac.york.sesame.testing.evolutionary/
+    -import ${SBT_REPO_ROOT}/uk.ac.york.sesame.testing.evolutionary/ \
+    -import ${SBT_REPO_ROOT}/uk.ac.york.sesame.testing.setup/
 
-# TODO: Need to run DiscoverPaths automatically
+# Run DiscoverPaths automatically to set the paths!
+RUN cd ${SBT_REPO_ROOT}/uk.ac.york.sesame.testing.setup && mvn compile exec:java -Dexec.mainClass="uk.ac.york.sesame.testing.setup.DiscoverPaths"
+
+# This is an example source directory
+RUN mkdir ${HOME}/shared-code
+
 # Set script to run the Pyro nameserver automatically
+
+# Copy the example project TestingPAL into ~/runtime-EclipseApplication/
+RUN cp -rv ${SBT_REPO_ROOT}/example-projects/ ${HOME}/runtime-EclipseApplication/
+
+# Remaining steps
+
+# Need to mvn install the projects before they will work in the child Eclipse
+# jrosbridge needs a custom run configuration with goal install, parameter skipTests and value true
+# Fixes in the generator with TestingPAL.model
+# pom.xml in the generated project needs to be set to use JDK 11
+# project pom files in the host Eclipse need to be set to use JDK11
