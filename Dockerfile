@@ -6,7 +6,7 @@ RUN date
 
 RUN apt-get -y update
 RUN apt-get -y install apt-utils
-RUN apt-get -y install emacs vim maven procps wget openjdk-17-jdk openjdk-11-jdk openjdk-11-jre openjdk-8-jdk openjdk-8-jre ros-noetic-rosbridge-server nano git xterm docker.io docker-compose docker-compose-v2 sudo socat
+RUN apt-get -y install emacs vim maven procps wget openjdk-17-jdk openjdk-11-jdk openjdk-17-jdk openjdk-11-jre openjdk-17-jre openjdk-8-jdk openjdk-8-jre ros-noetic-rosbridge-server nano git xterm docker.io docker-compose docker-compose-v2 sudo socat python3-venv python3-pip ssh net-tools rsync tree
 RUN apt-get clean
 
 # Create user, set options
@@ -101,6 +101,7 @@ COPY extra-files/*.jar ${INSTALL_DIR}/plugins
 ARG WORKER_DAEMON_DIR=/home/simtesting/soprano/
 RUN mkdir -p ${WORKER_DAEMON_DIR}
 RUN cd ${WORKER_DAEMON_DIR} && git clone https://github.com/jrharbin-york/SPworkerTemp
+RUN python3 -m venv ${HOME}/venvs/pyro
 
 # Import projects into Eclipse
 RUN ${INSTALL_DIR}/eclipse -nosplash -application com.seeq.eclipse.importprojects.headlessimport \
@@ -124,7 +125,7 @@ RUN mkdir ${HOME}/shared-code
 
 # Copy the example project TestingPAL into ~/runtime-EclipseApplication/
 RUN cp -rv ${SBT_REPO_ROOT}/example-projects/ ${HOME}/runtime-EclipseApplication/
-
+RUN cp -rv ${SBT_REPO_ROOT}/example-projects/PALTesting ${HOME}/shared-code/
 # Remaining steps
 
 # Need to mvn install the projects before they will work in the child Eclipse
@@ -132,3 +133,6 @@ RUN cp -rv ${SBT_REPO_ROOT}/example-projects/ ${HOME}/runtime-EclipseApplication
 # Fixes in the generator with TestingPAL.model
 # pom.xml in the generated project needs to be set to use JDK 11
 # project pom files in the host Eclipse need to be set to use JDK11
+
+# Expt runner node: Current IP needs to be set for the nameserver in distributed/PyroDaemons.java! - auto-configure?
+# Copy the example project to the code generation directory too!
