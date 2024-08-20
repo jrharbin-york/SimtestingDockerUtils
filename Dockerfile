@@ -1,12 +1,15 @@
 # Base OS
 FROM ros:noetic-ros-core-focal
 
+# TODO
+# https://askubuntu.com/questions/1173337/how-to-prevent-system-from-being-minimized
+
 # Install utilites
 RUN date
 
 RUN apt-get -y update
 RUN apt-get -y install apt-utils
-RUN apt-get -y install emacs vim maven procps wget openjdk-17-jdk openjdk-11-jdk openjdk-17-jdk openjdk-11-jre openjdk-17-jre openjdk-8-jdk openjdk-8-jre ros-noetic-rosbridge-server nano git xterm docker.io docker-compose docker-compose-v2 sudo socat python3-venv python3-pip ssh net-tools rsync tree
+RUN apt-get -y install emacs vim maven procps wget openjdk-17-jdk openjdk-11-jdk openjdk-17-jdk openjdk-11-jre openjdk-17-jre openjdk-8-jdk openjdk-8-jre ros-noetic-rosbridge-server nano git xterm docker.io docker-compose docker-compose-v2 sudo socat python3-venv python3-pip ssh net-tools rsync tree ack
 RUN apt-get clean
 
 # Create user, set options
@@ -60,7 +63,7 @@ org.eclipse.emf,\
 org.eclipse.emf.cdo.sdk.feature.group,\
 org.eclipse.emf.emfatic.core,\
 org.eclipse.wst.wsdl,\
-org.eclipse.xsd.sdk.feature.group,\
+ org.eclipse.xsd.sdk.feature.group,\
 org.eclipse.emf.emfatic.feature.group,\
 org.eclipse.m2e.feature.feature.group,\
 org.eclipse.m2e.pde.feature.feature.group,\
@@ -128,11 +131,20 @@ RUN cp -rv ${SBT_REPO_ROOT}/example-projects/ ${HOME}/runtime-EclipseApplication
 RUN cp -rv ${SBT_REPO_ROOT}/example-projects/PALTesting ${HOME}/shared-code/
 # Remaining steps
 
-# Need to mvn install the projects before they will work in the child Eclipse
-# jrosbridge needs a custom run configuration with goal install, parameter skipTests and value true
-# Fixes in the generator with TestingPAL.model
-# pom.xml in the generated project needs to be set to use JDK 11
-# project pom files in the host Eclipse need to be set to use JDK11
+# SSHd needs to be set to active and running on a custom port
+RUN sed -i 's/#Port 22/Port 39222/' sshd_config
 
-# Expt runner node: Current IP needs to be set for the nameserver in distributed/PyroDaemons.java! - auto-configure?
+# Need to mvn install the projects before they will work in the child Eclipse
+# jrosbridge needs to skip the tests
+RUN cd ${SBT_REPO_ROOT}/jrosbridge/ && mvn install -Dmaven.test.skip=true
+RUN cd ${SBT_REPO_ROOT}/jgea/ && mvn install
+RUN cd ${SBT_REPO_ROOT}/uk.ac.york.sesame.testing.architecture/ && mvn install
+RUN cd ${SBT_REPO_ROOT}/uk.ac.york.sesame.testing.architecture.ros/ && mvn install
+RUN cd ${SBT_REPO_ROOT}/uk.ac.york.sesame.testing.dsl/ && mvn install
+RUN cd ${SBT_REPO_ROOT}/uk.ac.york.sesame.testing.evolutionary/ && mvn install
+
+# Fixes in the generator with TestingPAL.model
+# CHECK: pom.xml in the generated project needs to be set to use JDK 11
+# CHECK: project pom files in the host Eclipse need to be set to use JDK11
+
 # Copy the example project to the code generation directory too!
